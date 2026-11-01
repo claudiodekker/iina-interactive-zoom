@@ -1,0 +1,25 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Info.json
+        run: node -e 'const info = require("./Info.json"); if (!Number.isInteger(info.ghVersion) || !info.ghRepo) { throw new Error("Info.json needs ghRepo and an integer ghVersion"); }'
+
+      - run: npm test
