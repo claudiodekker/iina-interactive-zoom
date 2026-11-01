@@ -4,10 +4,12 @@ An IINA plugin that zooms into the video like VLC's Interactive Zoom filter. A m
 
 ## Install
 
-From the repository root:
+In IINA, open Settings > Plugins, choose Install from GitHub..., and enter `claudiodekker/iina-interactive-zoom`. IINA offers updates for plugins installed this way.
+
+To work on the plugin, clone this repository and link it instead:
 
 ```sh
-/Applications/IINA.app/Contents/MacOS/iina-plugin link interactive-zoom
+/Applications/IINA.app/Contents/MacOS/iina-plugin link .
 ```
 
 ## Shortcuts
@@ -23,4 +25,14 @@ Zoom In and Zoom Out turn the panel on when it is off and take one step from 1x.
 
 ## Develop
 
-Run `npm test` from the repository root.
+```sh
+npm test
+```
+
+To release a new version, raise `version` and `ghVersion` in `Info.json` and push to `main`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+This plugin reproduces the behaviour of VLC's Interactive Zoom (`magnify`) filter. It contains no VLC code.
