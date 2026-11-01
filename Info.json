@@ -1,9 +1,9 @@
 {
   "name": "Interactive Zoom",
   "identifier": "io.dekker.interactive-zoom",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "ghRepo": "claudiodekker/iina-interactive-zoom",
-  "ghVersion": 1,
+  "ghVersion": 2,
   "description": "Zoom into the video with a draggable minimap and zoom gauge, like VLC's Interactive Zoom filter.",
   "author": {
     "name": "Claudio Dekker"

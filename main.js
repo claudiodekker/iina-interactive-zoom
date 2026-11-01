@@ -12,6 +12,7 @@ const state = { enabled: false, zoom: INITIAL_ZOOM, centerX: 0.5, centerY: 0.5, 
 let windowLoaded = false;
 let overlayLoaded = false;
 let layout = null;
+let overlayIdle = false;
 let toggleItem = null;
 let shaderCount = 0;
 let shaderTimer = null;
@@ -80,7 +81,7 @@ function isOurShader(path) {
 }
 
 /**
- * Swap in a minimap shader for the current state, or remove it when the panel is off.
+ * Swap in a minimap shader for the current state, or remove it while the panel is off or faded out.
  */
 function applyShader() {
   lastShaderAt = Date.now();
@@ -89,7 +90,7 @@ function applyShader() {
   const stale = Array.isArray(loaded) ? loaded.filter(isOurShader) : [];
   const box = outputBox(layout, mpv.getNative("osd-dimensions"));
 
-  if (state.enabled && state.panelVisible && box !== null) {
+  if (state.enabled && state.panelVisible && !overlayIdle && box !== null) {
     // mpv caches shader files by path for the whole session, so every change needs a new file name.
     shaderCount += 1;
 
@@ -214,6 +215,10 @@ function listenToOverlay() {
   overlay.onMessage("center", (data) => setCenter(data.x, data.y));
   overlay.onMessage("zoom", (data) => setZoom(data.zoom));
   overlay.onMessage("panel", (data) => setPanelVisible(data.visible));
+  overlay.onMessage("idle", (data) => {
+    overlayIdle = data.idle;
+    scheduleShader();
+  });
   overlay.onMessage("layout", (data) => {
     layout = data;
     scheduleShader();

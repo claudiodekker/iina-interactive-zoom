@@ -17,15 +17,15 @@
   #gauge-row { display: flex; align-items: flex-end; gap: 8px; }
   #gauge { position: relative; width: 14px; height: 140px; cursor: ns-resize; touch-action: none; }
   #fill { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; pointer-events: none; }
-  .fades { transition: opacity 400ms ease; }
+  .fades { transition: opacity 250ms ease; }
   body.idle .fades { opacity: 0; }
   #zoom-label { letter-spacing: 0.08em; text-shadow: 0 0 3px #000; }
 </style>
 </head>
 <body>
-<div id="panel">
+<div id="panel" class="fades">
   <div id="map" data-clickable></div>
-  <button id="hide" class="backing fades" data-clickable>Zoom hide</button>
+  <button id="hide" class="backing" data-clickable>Zoom hide</button>
   <div id="gauge-row">
     <div id="gauge" class="backing" data-clickable><div id="fill"></div></div>
     <span id="zoom-label">1.0x</span>
@@ -36,8 +36,9 @@
 <script>
   var MAX_ZOOM = 8;
   var WHEEL_RATIO = Math.pow(2, 0.25);
-  var IDLE_MS = 1500;
+  var IDLE_MS = 2500;
   var idleTimer = null;
+  var pointer = null;
   var zoom = 1;
 
   var panel = document.getElementById("panel");
@@ -138,27 +139,77 @@
    * Show the fading controls and fade them again after the mouse rests.
    */
   function wake() {
-    document.body.classList.remove("idle");
+    setIdle(false);
     clearTimeout(idleTimer);
     idleTimer = setTimeout(rest, IDLE_MS);
+  }
+
+  /**
+   * Determine if the mouse is resting on the minimap, the gauge or a button.
+   */
+  function isPointerOnControls() {
+    if (pointer === null || !document.querySelector(".fades:hover")) {
+      return false;
+    }
+
+    var element = document.elementFromPoint(pointer.x, pointer.y);
+
+    // :hover goes stale when the mouse leaves for plain video, which sends the page no events, so check IINA's last point too.
+    return element !== null && element.closest("[data-clickable]") !== null;
   }
 
   /**
    * Fade the controls, unless the mouse is resting on one of them.
    */
   function rest() {
-    if (document.querySelector(".fades:hover")) {
+    if (isPointerOnControls()) {
       idleTimer = setTimeout(rest, IDLE_MS);
 
       return;
     }
 
-    document.body.classList.add("idle");
+    setIdle(true);
   }
 
-  ["mousemove", "pointerdown", "wheel"].forEach(function (name) {
-    window.addEventListener(name, wake, { passive: true });
-  });
+  /**
+   * Fade the controls in or out, and tell the plugin so the minimap picture follows.
+   */
+  function setIdle(idle) {
+    if (document.body.classList.contains("idle") === idle) {
+      return;
+    }
+
+    document.body.classList.toggle("idle", idle);
+    iina.postMessage("idle", { idle: idle });
+  }
+
+  /**
+   * Show the fading controls whenever the mouse moves over the video.
+   */
+  function watchPointer() {
+    var hitTest = window.iina._hitTest;
+
+    /**
+     * Answer IINA's hit test, treating a new point as a mouse move.
+     */
+    function watchedHitTest(x, y) {
+      if (pointer === null || pointer.x !== x || pointer.y !== y) {
+        pointer = { x: x, y: y };
+        wake();
+      }
+
+      return hitTest(x, y);
+    }
+
+    // IINA sends mousemove only over clickable elements, but asks its hit test about every mouse move over the video.
+    Object.defineProperty(window.iina, "_hitTest", {
+      configurable: true,
+      get: function () { return watchedHitTest; },
+      set: function (replacement) { hitTest = replacement; },
+    });
+  }
+
+  watchPointer();
 
   iina.onMessage("state", function (data) {
     applyState(data);
