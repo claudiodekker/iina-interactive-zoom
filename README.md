@@ -38,6 +38,7 @@ Raise `version` and `ghVersion` in `Info.json` together, for example `1.0.0` and
 IINA installs the plugin from the latest release, and offers an update when `ghVersion` on `main` rises. CI fails when only one of the two fields changes, because IINA would then offer an update that installs the old release. Pushes that change neither field don't reach users.
 
 `.gitattributes` lists the files left out of the package.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
