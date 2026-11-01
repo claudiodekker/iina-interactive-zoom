@@ -12,14 +12,43 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Check Info.json
-        run: node -e 'const info = require("./Info.json"); if (!Number.isInteger(info.ghVersion) || !info.ghRepo) { throw new Error("Info.json needs ghRepo and an integer ghVersion"); }'
+      - name: Check the version fields
+        id: plan
+        run: node .github/scripts/release-plan.mjs
 
       - run: npm test
+
+  release:
+    needs: test
+    if: github.event_name == 'push' && needs.test.outputs.release == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    concurrency:
+      group: release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package the plugin
+        run: git archive --format=zip -o "${GITHUB_REPOSITORY#*/}-${{ needs.test.outputs.version }}.iinaplgz" HEAD
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v${{ needs.test.outputs.version }}" *.iinaplgz --target "$GITHUB_SHA" --title "v${{ needs.test.outputs.version }}" --generate-notes

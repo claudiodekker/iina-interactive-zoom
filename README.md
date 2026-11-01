@@ -31,8 +31,13 @@ Zoom In and Zoom Out turn the panel on when it is off and take one step from 1x.
 npm test
 ```
 
-To release a new version, raise `version` and `ghVersion` in `Info.json` and push to `main`.
+## Releasing
 
+Raise `version` and `ghVersion` in `Info.json` together, for example `1.0.0` and `1` to `1.1.0` and `2`, and push to `main`. CI then packages the plugin and publishes it as a GitHub release, such as `v1.1.0` with an `.iinaplgz` file attached.
+
+IINA installs the plugin from the latest release, and offers an update when `ghVersion` on `main` rises. CI fails when only one of the two fields changes, because IINA would then offer an update that installs the old release. Pushes that change neither field don't reach users.
+
+`.gitattributes` lists the files left out of the package.
 ## License
 
 MIT. See [LICENSE](LICENSE).
